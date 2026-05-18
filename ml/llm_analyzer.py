@@ -1,19 +1,24 @@
 import os
-import json
 from openai import OpenAI
+import json
+from dotenv import load_dotenv
+load_dotenv()
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"), timeout=10.0)
 
 def analyze_text_with_llm(text: str) -> dict:
 
     
-    # API 호출 실패를 대비한 예외 처리용 기본 데이터 구조
+    # 입력값 검증 (analyzer에서 진행중이지만 한 번 더)
+    if not text or not text.strip():
+        return {"score": 0, "reasons": [], "highlight_sentences": []}
+    
     fallback_result = {
         "score": 0,
-        "reasons": ["LLM 분석 실패"],
+        "reasons": [], 
         "highlight_sentences": []
     }
-    
+
     system_prompt = """
     너는 기업 및 개인 이메일을 타겟으로 하는 스피어 피싱 및 사회공학적 공격을 탐지하는 최고의 사이버 보안 AI 전문가야.
     제공된 이메일 본문을 정밀 분석하여 피싱 위험도를 평가하고, 반드시 아래에 지정된 JSON 형식으로만 응답해줘.
@@ -49,20 +54,13 @@ def analyze_text_with_llm(text: str) -> dict:
         
         # 결과 파싱
         result_content = response.choices[0].message.content
-        return json.loads(result_content)
+        try:
+            return json.loads(result_content)
+        except json.JSONDecodeError:
+            return fallback_result
 
     except Exception as e:
         # API 오류, 네트워크 문제, 키 누락 등이 발생하면 프로그램이 터지지 않고
         # 룰 기반 엔진으로만 돌아가도록 안전하게 Fallback 결과를 리턴
         print(f"[Warning] OpenAI API 호출 중 에러 발생: {e}")
         return fallback_result
-
-# 테스트 코드
-if __name__ == "__main__":
-    sample_email = """
-  
-    """
-    
-    print("--- 피싱 메일 분석 테스트 ---")
-    analysis = analyze_text_with_llm(sample_email)
-    print(json.dumps(analysis, indent=2, ensure_ascii=False))
