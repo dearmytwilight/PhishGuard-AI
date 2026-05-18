@@ -143,7 +143,7 @@ def analyze_urls(text: str) -> dict:
         return {"urls": [], "total_url_score": 0}
 
     results = [analyze_url(url) for url in urls]
-    total_url_score = min(sum(r["score"] for r in results), 40)
+    total_url_score = sum(r["score"] for r in results)
 
     return {
         "urls": results,

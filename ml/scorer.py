@@ -67,16 +67,7 @@ def calculate_score(text: str, url_score: int = 0) -> dict:
     )
     total_score += url_score
 
-    # 100점 초과 방지
-    total_score = min(total_score, 100)
 
-    # 등급 분류
-    if total_score >= 60:
-        grade = "위험"
-    elif total_score >= 30:
-        grade = "주의"
-    else:
-        grade = "안전"
 
     # 탐지된 키워드 리스트 합치기 (출력을 위해)
     threats = []
@@ -85,7 +76,6 @@ def calculate_score(text: str, url_score: int = 0) -> dict:
 
     return {
         "score": total_score,
-        "grade": grade,
         "threats": threats,
         "matched_categories": list(matched.keys())
     }
