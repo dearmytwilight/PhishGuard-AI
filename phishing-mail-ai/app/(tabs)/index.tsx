@@ -7,45 +7,49 @@ import { ThemedView } from '@/components/themed-view';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
+const API_URL = 'http://localhost:8000/analyze';
+
 export default function HomeScreen() {
   const [emailContent, setEmailContent] = useState('');
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const router = useRouter();
   const colorScheme = useColorScheme() ?? 'light';
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!emailContent.trim()) {
       alert('이메일 본문을 입력해주세요.');
       return;
     }
 
     setIsAnalyzing(true);
-    
-    // Simulate analysis delay
-    setTimeout(() => {
-      setIsAnalyzing(false);
-      
-      // Mock data based on content
-      let score = 20;
-      let threats = [];
-      
-      if (emailContent.includes('본인인증') || emailContent.includes('비밀번호')) {
-        score = 85;
-        threats.push({ title: '본인인증 유도', description: '"즉시 본인인증 하세요"와 같은 문구가 포함되어 있습니다.' });
-        threats.push({ title: '민감 정보 요청', description: '"비밀번호를 입력하세요"와 같은 민감 정보 요청이 감지되었습니다.' });
-      } else if (emailContent.includes('링크') || emailContent.includes('클릭')) {
-        score = 55;
-        threats.push({ title: '의심스러운 링크', description: '외부 링크 클릭을 유도하는 문구가 포함되어 있습니다.' });
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: emailContent }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`서버 오류: ${response.status}`);
       }
+
+      const data = await response.json();
 
       router.push({
         pathname: '/result',
-        params: { 
-          score: score.toString(),
-          threats: JSON.stringify(threats)
-        }
+        params: {
+          score: data.score.toString(),
+          grade: data.grade,
+          threats: JSON.stringify(data.threats ?? []),
+          highlight_sentences: JSON.stringify(data.highlight_sentences ?? []),
+        },
       });
-    }, 1500);
+    } catch {
+      alert('분석 중 오류가 발생했습니다. 서버 연결을 확인해주세요.');
+    } finally {
+      setIsAnalyzing(false);
+    }
   };
 
   return (
