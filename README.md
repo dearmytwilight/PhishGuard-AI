@@ -1,4 +1,4 @@
-# Phishing-mail-ai
+# PhishGuard AI
 
 ```markdown
 # AI 기반 피싱 메일 정밀 분석 및 사용자 보안 리터러시 강화 서비스
